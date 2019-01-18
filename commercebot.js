@@ -12,6 +12,10 @@ let chrome = require('selenium-webdriver/chrome');
 
 let argv = require('minimist')(process.argv.slice(2));
 
+process.on('UnhandledPromiseRejectionWarning', function (exception) {
+    // handle or ignore error
+});
+
 class CommerceBot {
     constructor() {
         this.step = 0;
@@ -27,6 +31,7 @@ class CommerceBot {
 
     async checkout() {
         await this.driver.get(argv['url']);
+        await this.wait();
 
         let retry = true;
 
@@ -117,9 +122,6 @@ class CommerceBot {
                 if (e instanceof error.NoSuchElementError) {
                     retry = false;
                 }
-                else {
-                    console.log(e);
-                }
                 if(blacklistPending) {
                     this.blacklist.push(blacklistPending);
                 }
@@ -130,44 +132,88 @@ class CommerceBot {
     }
 
     async faq() {
-        this.driver.get(argv['url']);
-
+        this.blacklist = [];
         let retry = true;
         this.step = 0;
+
+        await this.driver.get(argv['url']);
+        await this.wait();
+
+        while (retry == true) {
+            let blacklistPending;
+
+            try {
+                let search = await this.findByList(['search'], '');
+                blacklistPending = await search.getId();
+
+                await search.sendKeys('faq', Key.RETURN);
+
+                await this.wait();
+
+                let faq = await this.findByList(['faq', 'f.a.q.', 'F.A.Q.', 'frequently asked questions', 'help', 'Help'], 'a');
+                blacklistPending = await faq.getId();
+                await faq.click();
+
+                return 'FAQ Found';
+            } catch (e) {
+                if (e instanceof error.NoSuchElementError) {
+                    retry = false;
+                }
+                if (blacklistPending) {
+                    this.blacklist.push(blacklistPending);
+                }
+            }
+        }
+
+        return 'No FAQ Found';
+    }
+
+    async newsletter() {
+        this.blacklist = [];
+        let retry = true;
+        this.step = 0;
+
+        await this.driver.get(argv['url']);
+        await this.wait();
 
         while (retry == true) {
             let blacklistPending;
 
             try {
                 if (0 == this.step) {
-                    let search = await this.findByList(['search'], '');
-                    blacklistPending = await search.getId();
+                    let newsletter = await this.findByList(['newsletter'], 'input');
+                    blacklistPending = await newsletter.getId();
 
-                    await search.sendKeys('faq');
-                    await search.sendKeys(Key.RETURN);
+                    await newsletter.sendKeys('fake@email.com');
 
-                    let faq = await this.findByList(['faq', 'f.a.q.', 'F.A.Q.', 'frequently asked questions', 'help', 'Help'], 'a');
-                    blacklistPending = await faq.getId();
-                    faq.click();
+                    return 'Newsletter signup found';
+                }
+                if (1 == this.step) {
+                    let newsletter = await this.findByList(['newsletter'], 'form');
+                    blacklistPending = await newsletter.getId();
+                    let email = await newsletter.findElement(By.css('input[name*="email"]'));
 
-                    await this.wait();
+                    await email.sendKeys('fake@email.com');
 
-                    this.step++;
-
-                    return 'FAQ Found';
+                    return 'Newsletter signup found';
                 }
 
             } catch (e) {
                 if (e instanceof error.NoSuchElementError) {
-                    retry = false;
+                    if(this.step < 1) {
+                        this.step++;
+                    }
+                    else {
+                        retry = false;
+                    }
                 }
                 if (blacklistPending) {
-                    this.blacklist += blacklistPending;
+                    this.blacklist.push(blacklistPending);
                 }
             }
         }
 
-        return 'No FAQ Found';
+        return 'No newsletter found';
     }
 
     async findByList(list, modifier = '') {
@@ -205,7 +251,6 @@ class CommerceBot {
 
     async find(term, modifier = '') {
         let search = false;
-        let success = false;
         let exception = new error.NoSuchElementError();
 
         try {
@@ -329,5 +374,6 @@ class CommerceBot {
     let bot = new CommerceBot();
 
     console.log(await bot.checkout());
-    //console.log(await bot.faq());
+    console.log(await bot.faq());
+    console.log(await bot.newsletter());
 })();
