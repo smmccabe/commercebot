@@ -21,6 +21,10 @@ module.exports = class CommerceBot {
             .build();
     }
 
+    async close() {
+        await this.driver.close();
+    }
+
     async checkout(url) {
         await this.driver.get(url);
         await this.wait();
@@ -37,7 +41,7 @@ module.exports = class CommerceBot {
                     let search = await this.findByList(searchLabels, '');
                     blacklistPending = await search.getId();
 
-                    search.click();
+                    await search.click();
 
                     search = await this.findByList(searchLabels, '');
 
@@ -51,7 +55,7 @@ module.exports = class CommerceBot {
                     let product = await this.findByList(['product', 'detail', 'basic'], 'a');
                     blacklistPending = await product.getId();
 
-                    product.click();
+                    await product.click();
 
                     this.step++;
                     this.blacklist = [];
@@ -60,7 +64,7 @@ module.exports = class CommerceBot {
                 if (2 == this.step) {
                     let addToCart = await this.findByList(['add to cart'], 'input');
                     blacklistPending = await addToCart.getId();
-                    addToCart.click();
+                    await addToCart.click();
 
                     this.step++;
                     this.blacklist = [];
@@ -69,7 +73,7 @@ module.exports = class CommerceBot {
                 if (3 == this.step) {
                     let cart = await this.findByList(['cart'], 'a');
                     blacklistPending = await cart.getId();
-                    cart.click();
+                    await cart.click();
 
                     this.step++;
                     this.blacklist = [];
@@ -78,7 +82,7 @@ module.exports = class CommerceBot {
                 if (4 == this.step) {
                     let checkout = await this.findByList(['checkout'], 'input');
                     blacklistPending = await checkout.getId();
-                    checkout.click();
+                    await checkout.click();
 
                     this.step++;
                     this.blacklist = [];
@@ -88,16 +92,18 @@ module.exports = class CommerceBot {
                 if (5 == this.step) {
                     let guest = await this.findByList(['guest'], 'input');
                     blacklistPending = await guest.getId();
-                    guest.click();
+                    await guest.click();
 
                     this.step++;
                     this.blacklist = [];
                 }
 
                 if (6 == this.step) {
+                    await this.fillCheckout();
+
                     let review = await this.findByList(['review'], 'input');
                     blacklistPending = await review.getId();
-                    review.click();
+                    await review.click();
 
                     this.step++;
                     this.blacklist = [];
@@ -106,7 +112,7 @@ module.exports = class CommerceBot {
                 if (7 == this.step) {
                     let complete = await this.findByList(['complete'], 'input');
                     blacklistPending = await complete.getId();
-                    complete.click();
+                    await complete.click();
 
                     this.step++;
                     this.blacklist = [];
@@ -359,5 +365,70 @@ module.exports = class CommerceBot {
         }
 
         return false;
+    }
+
+    async fillCheckout() {
+        try {
+            let fields = await this.driver.findElements(By.css('input[type="text"]:required'));
+
+            for (let field of fields) {
+                //If the field already has text in it, like from an account, skip it.
+                let value = await field.getAttribute('value');
+                if(value.length > 0) {
+                    continue;
+                }
+
+                let name = await field.getAttribute('name');
+
+                if(name.includes('postal') || name.includes('zip')) {
+                    await field.sendKeys('60613');
+                    continue;
+                }
+
+                if (name.includes('state')) {
+                    await field.sendKeys('Illinois');
+                    continue;
+                }
+
+                if(name.includes('address') && name.includes('line')) {
+                    await field.sendKeys('1060 West Addison');
+                    continue;
+                }
+
+                await field.sendKeys('Test');
+            }
+
+            fields = await this.driver.findElements(By.css('input[type="email"]:required'));
+            for (let field of fields) {
+                //If the field already has text in it, like from an account, skip it.
+                let value = await field.getAttribute('value');
+                if (value.length > 0) {
+                    continue;
+                }
+
+                await field.sendKeys('test765463@example.com');
+            }
+
+            fields = await this.driver.findElements(By.css('input[type="tel"]:required'));
+            for (let field of fields) {
+                //If the field already has text in it, like from an account, skip it.
+                let value = await field.getAttribute('value');
+                if (value.length > 0) {
+                    continue;
+                }
+
+                await field.sendKeys('5558675309');
+            }
+
+            fields = await this.driver.findElements(By.css('select[name*="state"]:required, select[name*="area"]:required'));
+            for (let field of fields) {
+                await field.findElement(By.css('option[value="IL"]')).click();
+            }
+        }
+        catch (e) {
+            // Errors are fine, we're just trying to fill out as best we can.
+        }
+
+        return true;
     }
 }
