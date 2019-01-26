@@ -7,18 +7,32 @@ const {
 } = require('selenium-webdriver');
 
 let chrome = require('selenium-webdriver/chrome');
+let firefox = require('selenium-webdriver/firefox');
 
 module.exports = class CommerceBot {
-    constructor() {
+    constructor(headless = false, browser = 'chrome') {
+        const screen = {
+            width: 1200,
+            height: 1024,
+        };
+
+        let chromeOptions = new chrome.Options().windowSize(screen);
+        let firefoxOptions = new firefox.Options().windowSize(screen);
+
+        if(headless) {
+            chromeOptions.headless();
+            chromeOptions.addArguments('no-sandbox', 'disable-dev-shm-usage');
+            firefoxOptions.headless();
+        }
+
         this.step = 0;
         this.blacklist = [];
         this.driver = new Builder()
-            .forBrowser('chrome')
-            .setChromeOptions(new chrome.Options().windowSize({
-                height: 1100,
-                width: 1200
-            }))
+            .forBrowser(browser)
+            .setChromeOptions(chromeOptions)
+            .setFirefoxOptions(firefoxOptions)
             .build();
+
     }
 
     async close() {
