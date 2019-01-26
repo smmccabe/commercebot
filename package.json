@@ -11,5 +11,10 @@
     "mocha": "^5.2.0",
     "pkg": "^4.3.7",
     "selenium-webdriver": "^4.0.0-alpha.1"
+  },
+  "scripts": {
+    "test": "yarn mocha",
+    "dev": "node commercebot.js",
+    "build": "yarn pkg commercebot.js --options no-warnings"
   }
 }
