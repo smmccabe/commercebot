@@ -1,6 +1,6 @@
 {
   "name": "commercebot",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A bot to pretend to be a simple customer",
   "main": "index.js",
   "author": "Shawn McCabe",
