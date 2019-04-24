@@ -17,4 +17,4 @@ build:
       - commercebot-win.exe
   script:
     - yarn install
-    - yarn build     
+    - yarn build
