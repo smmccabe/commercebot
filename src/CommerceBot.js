@@ -2,12 +2,12 @@ const {
     Builder,
     By,
     Key,
-    until,
     error
 } = require('selenium-webdriver');
 
 let chrome = require('selenium-webdriver/chrome');
 let firefox = require('selenium-webdriver/firefox');
+let shuffle = require('./Shuffle');
 
 module.exports = class CommerceBot {
     constructor(headless = false, browser = 'chrome') {
@@ -25,7 +25,6 @@ module.exports = class CommerceBot {
             firefoxOptions.headless();
         }
 
-        this.step = 0;
         this.blacklist = [];
         this.driver = new Builder()
             .forBrowser(browser)
@@ -39,17 +38,28 @@ module.exports = class CommerceBot {
         await this.driver.close();
     }
 
+    async timer(url) {
+      let start = process.hrtime();
+      await this.driver.get(url);
+      let end = process.hrtime(start);
+      return 'Execution time: ' + end[0] + '.' + end[1];
+    }
+
     async checkout(url) {
         await this.driver.get(url);
         await this.wait();
 
         let retry = true;
+        let step = 0;
+        let productNames = ['Basic', 'Test', 'Blue', 'Green', 'Red', 'T-Shirt', 'Gift'];
+        productNames = shuffle(productNames);
 
         while (retry == true) {
             let blacklistPending;
+            let searchTerm;
 
             try {
-                if (0 == this.step) {
+                if (0 == step) {
                     // Find the product search/
                     let searchLabels = ['search', 'filter']
                     let search = await this.findByList(searchLabels, '');
@@ -58,77 +68,81 @@ module.exports = class CommerceBot {
                     await search.click();
 
                     search = await this.findByList(searchLabels, '');
+                    await search.clear();
 
-                    await search.sendKeys('basic', Key.RETURN);
+                    searchTerm = productNames.pop();
 
-                    this.step++;
+                    await search.sendKeys(searchTerm, Key.RETURN);
+
+                    step++;
                     this.blacklist = [];
                 }
 
-                if (1 == this.step) {
-                    let product = await this.findByList(['product', 'detail', 'basic'], 'a');
+                if (1 == step) {
+                    let product = await this.findByList(['Product', 'detail', searchTerm], 'a');
                     blacklistPending = await product.getId();
 
                     await product.click();
+                    await this.wait();
 
-                    this.step++;
+                    step++;
                     this.blacklist = [];
                 }
 
-                if (2 == this.step) {
+                if (2 == step) {
                     let addToCart = await this.findByList(['add to cart'], 'input');
                     blacklistPending = await addToCart.getId();
                     await addToCart.click();
 
-                    this.step++;
+                    step++;
                     this.blacklist = [];
                 }
 
-                if (3 == this.step) {
+                if (3 == step) {
                     let cart = await this.findByList(['cart'], 'a');
                     blacklistPending = await cart.getId();
                     await cart.click();
 
-                    this.step++;
+                    step++;
                     this.blacklist = [];
                 }
 
-                if (4 == this.step) {
+                if (4 == step) {
                     let checkout = await this.findByList(['checkout'], 'input');
                     blacklistPending = await checkout.getId();
                     await checkout.click();
 
-                    this.step++;
+                    step++;
                     this.blacklist = [];
                 }
 
                 // Make this be an optional step somehow? combine with step 6?
-                if (5 == this.step) {
+                if (5 == step) {
                     let guest = await this.findByList(['guest'], 'input');
                     blacklistPending = await guest.getId();
                     await guest.click();
 
-                    this.step++;
+                    step++;
                     this.blacklist = [];
                 }
 
-                if (6 == this.step) {
+                if (6 == step) {
                     await this.fillCheckout();
 
                     let review = await this.findByList(['review'], 'input');
                     blacklistPending = await review.getId();
                     await review.click();
 
-                    this.step++;
+                    step++;
                     this.blacklist = [];
                 }
 
-                if (7 == this.step) {
+                if (7 == step) {
                     let complete = await this.findByList(['complete'], 'input');
                     blacklistPending = await complete.getId();
                     await complete.click();
 
-                    this.step++;
+                    step++;
                     this.blacklist = [];
 
                     return 'Checkout Completed'
@@ -136,6 +150,10 @@ module.exports = class CommerceBot {
 
             } catch (e) {
                 if (e instanceof error.NoSuchElementError) {
+                    if (step < 4 && productNames.length > 0) {
+                      step = 0;
+                      continue;
+                    }
                     retry = false;
                 }
                 if (blacklistPending) {
@@ -144,13 +162,12 @@ module.exports = class CommerceBot {
             }
         }
 
-        return 'Checkout Incomplete, failed at step ' + this.step;
+        return 'Checkout Incomplete, failed at step ' + step;
     }
 
     async faq(url) {
         this.blacklist = [];
         let retry = true;
-        this.step = 0;
 
         await this.driver.get(url);
         await this.wait();
@@ -187,7 +204,7 @@ module.exports = class CommerceBot {
     async newsletter(url) {
         this.blacklist = [];
         let retry = true;
-        this.step = 0;
+        let step = 0;
 
         await this.driver.get(url);
         await this.wait();
@@ -196,7 +213,7 @@ module.exports = class CommerceBot {
             let blacklistPending;
 
             try {
-                if (0 == this.step) {
+                if (0 == step) {
                     let newsletter = await this.findByList(['newsletter'], 'input');
                     blacklistPending = await newsletter.getId();
 
@@ -204,7 +221,7 @@ module.exports = class CommerceBot {
 
                     return 'Newsletter signup found';
                 }
-                if (1 == this.step) {
+                if (1 == step) {
                     let newsletter = await this.findByList(['newsletter'], 'form');
                     blacklistPending = await newsletter.getId();
                     let email = await newsletter.findElement(By.css('input[name*="email"]'));
@@ -216,8 +233,8 @@ module.exports = class CommerceBot {
 
             } catch (e) {
                 if (e instanceof error.NoSuchElementError) {
-                    if (this.step < 1) {
-                        this.step++;
+                    if (step < 1) {
+                        step++;
                     } else {
                         retry = false;
                     }
