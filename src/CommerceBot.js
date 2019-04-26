@@ -38,11 +38,20 @@ module.exports = class CommerceBot {
         await this.driver.close();
     }
 
-    async timer(url) {
+    async timer(url, limit = 10) {
       let start = process.hrtime();
       await this.driver.get(url);
       let end = process.hrtime(start);
-      return 'Execution time: ' + end[0] + '.' + end[1];
+      end = (end[0] * 1000) + (end[1] / 1000000);
+
+      console.log(end);
+
+      let success = 0;
+      if (end >= limit) {
+        success = 1;
+      }
+
+      return success;
     }
 
     async checkout(url) {
