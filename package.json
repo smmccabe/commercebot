@@ -15,7 +15,7 @@
   "scripts": {
     "test": "yarn mocha",
     "dev": "node commercebot.js",
-    "build": "yarn pkg . --out-path bin --public  --options no-warnings"
+    "build": "yarn pkg . --target node10 --out-path bin --public  --options no-warnings"
   },
   "bin": {
     "commercebot": "./commercebot.js"
