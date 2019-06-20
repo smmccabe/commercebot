@@ -8,6 +8,7 @@ const {
 let chrome = require('selenium-webdriver/chrome');
 let firefox = require('selenium-webdriver/firefox');
 let shuffle = require('./Shuffle');
+let yaml = require('js-yaml');
 
 module.exports = class CommerceBot {
     constructor(headless = false, browser = 'chrome') {
@@ -31,7 +32,6 @@ module.exports = class CommerceBot {
             .setChromeOptions(chromeOptions)
             .setFirefoxOptions(firefoxOptions)
             .build();
-
     }
 
     async close() {
@@ -60,6 +60,7 @@ module.exports = class CommerceBot {
 
         let retry = true;
         let step = 0;
+
         let productNames = ['Basic', 'Test', 'Blue', 'Green', 'Red', 'T-Shirt', 'Gift'];
         productNames = shuffle(productNames);
 
@@ -185,14 +186,14 @@ module.exports = class CommerceBot {
             let blacklistPending;
 
             try {
-                let search = await this.findByList(['search'], '');
+                let search = await this.findByList(['search', 'filter'], '');
                 blacklistPending = await search.getId();
 
                 await search.sendKeys('faq', Key.RETURN);
 
                 await this.wait();
 
-                let faq = await this.findByList(['faq', 'f.a.q.', 'F.A.Q.', 'frequently asked questions', 'help', 'Help'], 'a');
+                let faq = await this.findByList(['FAQ', 'faq', 'f.a.q.', 'F.A.Q.', 'frequently asked questions', 'help', 'Help'], 'a');
                 blacklistPending = await faq.getId();
                 await faq.click();
 
