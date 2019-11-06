@@ -7,6 +7,7 @@
   "license": "MIT",
   "dependencies": {
     "chai": "^4.2.0",
+    "js-yaml": "^3.13.1",
     "minimist": "^1.2.0",
     "mocha": "^5.2.0",
     "pkg": "^4.3.7",
@@ -15,7 +16,8 @@
   "scripts": {
     "test": "yarn mocha",
     "dev": "node commercebot.js",
-    "build": "yarn pkg . --target node10 --out-path bin --public  --options no-warnings"
+    "build": "yarn pkg . --target node10 --out-path bin --public  --options no-warnings",
+    "lint": "yarn eslint ."
   },
   "bin": {
     "commercebot": "./commercebot.js"
