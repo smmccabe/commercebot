@@ -1,10 +1,10 @@
 module.exports = function shuffle(array) {
-  let currentIndex = array.length,
-    temporaryValue, randomIndex;
+  let currentIndex = array.length;
+  let temporaryValue; let
+    randomIndex;
 
   // While there remain elements to shuffle...
-  while (0 !== currentIndex) {
-
+  while (currentIndex !== 0) {
     // Pick a remaining element...
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex -= 1;
@@ -16,4 +16,4 @@ module.exports = function shuffle(array) {
   }
 
   return array;
-}
+};
