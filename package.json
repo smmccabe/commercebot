@@ -7,16 +7,19 @@
   "license": "MIT",
   "dependencies": {
     "chai": "^4.2.0",
-    "js-yaml": "^3.13.1",
     "minimist": "^1.2.0",
     "mocha": "^5.2.0",
-    "pkg": "^4.3.7",
+    "nexe": "^3.3.2",
     "selenium-webdriver": "^4.0.0-alpha.1"
   },
   "scripts": {
     "test": "yarn mocha",
     "dev": "node commercebot.js",
-    "build": "yarn pkg . --target node10 --out-path bin --public  --options no-warnings",
+    "build": "yarn nexe commercebot.js --output ./bin/commercebot",
+    "build-windows": "yarn nexe commercebot.js --output ./bin/commercebot-win --target win32-x64 --build",
+    "build-mac": "yarn nexe commercebot.js --output ./bin/commercebot-macos --target darwin-x64 --build",
+    "build-linux": "yarn nexe commercebot.js --output ./bin/commercebot-linux --target linux-x64 --build",
+    "package": "yarn build-windows && yarn build-mac && yarn build-linux",
     "lint": "yarn eslint ."
   },
   "bin": {
